@@ -376,7 +376,7 @@ char **was_fuzzed_map = NULL; /* A 2D array keeping state-specific was_fuzzed in
 u32 fuzzed_map_states = 0;
 u32 fuzzed_map_qentries = 0;
 u32 max_seed_region_count = 0;
-u32 local_port;		/* TCP/UDP port number to use as source */
+u32 local_port = 4000;		/* TCP/UDP port number to use as source */
 
 /* flags */
 u8 use_net = 0;

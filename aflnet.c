@@ -1610,8 +1610,6 @@ unsigned int *extract_response_codes_ot(unsigned char *buf, unsigned int buf_siz
     if (state_sequence == NULL) PFATAL("Unable realloc a memory region to store state sequence");
     state_sequence[state_count - 1] = 0;
 
-
-
     while(buf_size < byte_count){
         memcpy(&mem[mem_count], buf + byte_count++, 1);
 
