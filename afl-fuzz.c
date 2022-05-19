@@ -37,6 +37,8 @@
 #endif
 #define _FILE_OFFSET_BITS 64
 
+#include "shittylog.h"
+
 #include "config.h"
 #include "types.h"
 #include "debug.h"
@@ -376,7 +378,7 @@ char **was_fuzzed_map = NULL; /* A 2D array keeping state-specific was_fuzzed in
 u32 fuzzed_map_states = 0;
 u32 fuzzed_map_qentries = 0;
 u32 max_seed_region_count = 0;
-u32 local_port = 4000;		/* TCP/UDP port number to use as source */
+u32 local_port;		/* TCP/UDP port number to use as source */
 
 /* flags */
 u8 use_net = 0;
@@ -763,11 +765,11 @@ void update_state_aware_variables(struct queue_entry *q, u8 dry_run)
   state_info_t *state;
   unsigned int state_count;
 
-  if (!response_buf_size || !response_bytes) return;
+    if (!response_buf_size || !response_bytes) return;
 
   unsigned int *state_sequence = (*extract_response_codes)(response_buf, response_buf_size, &state_count);
 
-  q->unique_state_count = get_unique_state_count(state_sequence, state_count);
+    q->unique_state_count = get_unique_state_count(state_sequence, state_count);
 
   if (is_state_sequence_interesting(state_sequence, state_count)) {
     //Save the current kl_messages to a file which can be used to replay the newly discovered paths on the ipsm

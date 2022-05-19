@@ -1498,6 +1498,8 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
     unsigned int cur_end = 0;
 
 
+    /*
+
     if (memcmp(&buf[0], encryptByte, 1) == 0) {
         region_count++;
         regions = (region_t *) ck_realloc(regions, region_count * sizeof(region_t));
@@ -1577,6 +1579,7 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
         }
     }
 
+     */
     //in case region_count equals zero, it means that the structure of the buffer is broken
     //hence we create one region for the whole buffer
     if ((region_count == 0) && (buf_size > 0)) {
@@ -1610,21 +1613,20 @@ unsigned int *extract_response_codes_ot(unsigned char *buf, unsigned int buf_siz
     if (state_sequence == NULL) PFATAL("Unable realloc a memory region to store state sequence");
     state_sequence[state_count - 1] = 0;
 
+    OKF("%s",mem);
     while(buf_size < byte_count){
         memcpy(&mem[mem_count], buf + byte_count++, 1);
 
         if ((mem_count == 0) && memcmp(mem, encryptByte, 1) == 0) {
-            unsigned char message_code = &mem[mem_count+10];
-            state_count++;
-            state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
-            state_sequence[state_count - 1] = message_code;
-            mem_count = 0;
-        } else if ((mem_count == 0) && memcmp(&buf[0], notEncryptByte, 1) == 0) {
             unsigned char message_code = &mem[mem_count+11];
             state_count++;
             state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
             state_sequence[state_count - 1] = message_code;
-            mem_count = 0;
+        } else if ((mem_count == 0) && memcmp(&buf[0], notEncryptByte, 1) == 0) {
+            unsigned char message_code = &mem[mem_count+1];
+            state_count++;
+            state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
+            state_sequence[state_count - 1] = message_code;
         } else {
             mem_count++;
             if (mem_count == mem_size) {
