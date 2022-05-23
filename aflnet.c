@@ -1496,16 +1496,8 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
     char encryptByte[2] = { 0x00, 0x15 };
     char notEncryptByte[] = {0xFF};
 
-    regions = (region_t *) ck_realloc(regions, sizeof(region_t));
-
     while(buf_size > byte_count){
-        OKF("buf: %s", buf);
-        OKF("bufsize: %u", buf_size);
-        OKF("first byte: %x", curr_start);
         if (memcmp(&buf[curr_start], encryptByte, 2) == 0) {
-
-            OKF("encrypt");
-
             len = 3+curr_start+buf[curr_start+11];
 
             while(len < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && (memcmp(&buf[len+1], notEncryptByte, 1) != 0)){
@@ -1513,36 +1505,32 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
             }
             curr_end = len;
 
-            regions[region_count].start_byte = curr_start;
-            regions[region_count].end_byte = curr_end;
-            regions[region_count].state_sequence = NULL;
-            regions[region_count].state_count = 0;
             region_count++;
+            regions = (region_t *) ck_realloc(regions, region_count * sizeof(region_t));
+            regions[region_count-1].start_byte = curr_start;
+            regions[region_count-1].end_byte = curr_end;
+            regions[region_count-1].state_sequence = NULL;
+            regions[region_count-1].state_count = 0;
 
         } else if (memcmp(&buf[curr_start], notEncryptByte,1) == 0) {
 
-            OKF("NOencrypt");
-
-            OKF("curr_start: %d", curr_start);
             len = 3 + curr_start + buf[curr_start+3];
-            OKF("len: %d",len);
 
             while(len+1 < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && memcmp(&buf[len+1], notEncryptByte, 1) != 0){
-                OKF("buf: %d", buf[len+2]);
                 len = len + buf[len+2];
-                OKF("len: %d", len);
 
             }
             curr_end = len;
 
-            regions[region_count].start_byte = curr_start;
-            regions[region_count].end_byte = curr_end;
-            regions[region_count].state_sequence = NULL;
-            regions[region_count].state_count = 0;
             region_count++;
+            regions = (region_t *) ck_realloc(regions, region_count * sizeof(region_t));
+            regions[region_count-1].start_byte = curr_start;
+            regions[region_count-1].end_byte = curr_end;
+            regions[region_count-1].state_sequence = NULL;
+            regions[region_count-1].state_count = 0;
+
 
         } else {
-            OKF("break");
             break;
         }
         curr_start = byte_count = curr_end + 1;
