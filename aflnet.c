@@ -1489,51 +1489,55 @@ unsigned int *extract_response_codes_ipp(unsigned char *buf, unsigned int buf_si
 region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigned int *region_count_ref) {
     unsigned int byte_count = 0;
     unsigned int region_count = 0;
+    unsigned int encrypted_tlv_space = 13;
+    unsigned int unencrypted_tlv_space = 3;
+    int curr_end = 0, len = 0;
+
+
     region_t *regions = NULL;
-
-    int curr_start= 0, curr_end =0, len = 0;
-
-    OKF("buffsize: %d", buf_size);
-
-    char encryptByte[2] = { 0x00, 0x15 };
+    char encryptByte[2] = {0x00, 0x15};
     char notEncryptByte[] = {0xFF};
 
-    while(buf_size > byte_count){
-        if (memcmp(&buf[curr_start], encryptByte, 2) == 0) {
-            len = 13+curr_start+buf[curr_start+13];
 
-            while(len < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && (memcmp(&buf[len+1], notEncryptByte, 1) != 0)){
-                len = 2+len + buf[len+2];
+    OKF("buffsize: %d", buf_size);
+    while (byte_count < buf_size) {
+        if (memcmp(&buf[byte_count], encryptByte, 2) == 0) {
+            len = encrypted_tlv_space + byte_count + buf[byte_count + encrypted_tlv_space];
+
+            while (len < buf_size && memcmp(&buf[len + 1], encryptByte, 2) != 0 &&
+                   (memcmp(&buf[len + 1], notEncryptByte, 1) != 0)) {
+                len = 2 + len + buf[len + 2];
             }
             curr_end = len;
 
             region_count++;
             regions = (region_t *) ck_realloc(regions, region_count * sizeof(region_t));
-            regions[region_count-1].start_byte = curr_start;
-            regions[region_count-1].end_byte = curr_end;
-            regions[region_count-1].state_sequence = NULL;
-            regions[region_count-1].state_count = 0;
+            regions[region_count - 1].start_byte = byte_count;
+            regions[region_count - 1].end_byte = curr_end;
+            regions[region_count - 1].state_sequence = NULL;
+            regions[region_count - 1].state_count = 0;
 
-        } else if (memcmp(&buf[curr_start], notEncryptByte,1) == 0) {
+        } else if (memcmp(&buf[byte_count], notEncryptByte, 1) == 0) {
 
-            len = 3 + curr_start + buf[curr_start+3];
+            len = unencrypted_tlv_space + byte_count + buf[byte_count + unencrypted_tlv_space];
 
-            while(len+1 < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && memcmp(&buf[len+1], notEncryptByte, 1) != 0){
-                len = 2+len + buf[len+2];
+            while (len + 1 < buf_size && memcmp(&buf[len + 1], encryptByte, 2) != 0 &&
+                   memcmp(&buf[len + 1], notEncryptByte, 1) != 0) {
+                len = 2 + len + buf[len + 2];
             }
             curr_end = len;
 
             region_count++;
             regions = (region_t *) ck_realloc(regions, region_count * sizeof(region_t));
-            regions[region_count-1].start_byte = curr_start;
-            regions[region_count-1].end_byte = curr_end;
-            regions[region_count-1].state_sequence = NULL;
-            regions[region_count-1].state_count = 0;
+            regions[region_count - 1].start_byte = byte_count;
+            regions[region_count - 1].end_byte = curr_end;
+            regions[region_count - 1].state_sequence = NULL;
+            regions[region_count - 1].state_count = 0;
 
         } else {
             break;
         }
-        curr_start = byte_count = curr_end + 1;
+        byte_count = curr_end + 1;
 
 
     }
@@ -1574,16 +1578,16 @@ unsigned int *extract_response_codes_ot(unsigned char *buf, unsigned int buf_siz
     if (state_sequence == NULL) PFATAL("Unable realloc a memory region to store state sequence");
     state_sequence[state_count - 1] = 0;
 
-    while(buf_size < byte_count){
+    while (buf_size < byte_count) {
         memcpy(&mem[mem_count], buf + byte_count++, 1);
 
-        if ( memcmp(mem, encryptByte, 1) == 0) {
-            unsigned char message_code = &mem[mem_count+11];
+        if (memcmp(mem, encryptByte, 1) == 0) {
+            unsigned char message_code = &mem[mem_count + 11];
             state_count++;
             state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
             state_sequence[state_count - 1] = message_code;
         } else if (memcmp(&buf[0], notEncryptByte, 1) == 0) {
-            unsigned char message_code = &mem[mem_count+1];
+            unsigned char message_code = &mem[mem_count + 1];
             state_count++;
             state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
             state_sequence[state_count - 1] = message_code;
