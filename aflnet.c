@@ -1493,15 +1493,17 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
 
     int curr_start= 0, curr_end =0, len = 0;
 
+    OKF("buffsize: %d", buf_size);
+
     char encryptByte[2] = { 0x00, 0x15 };
     char notEncryptByte[] = {0xFF};
 
     while(buf_size > byte_count){
         if (memcmp(&buf[curr_start], encryptByte, 2) == 0) {
-            len = 3+curr_start+buf[curr_start+11];
+            len = 13+curr_start+buf[curr_start+13];
 
             while(len < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && (memcmp(&buf[len+1], notEncryptByte, 1) != 0)){
-                len = buf[len+2];
+                len = 2+len + buf[len+2];
             }
             curr_end = len;
 
@@ -1517,8 +1519,7 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
             len = 3 + curr_start + buf[curr_start+3];
 
             while(len+1 < buf_size && memcmp(&buf[len+1], encryptByte, 2) != 0 && memcmp(&buf[len+1], notEncryptByte, 1) != 0){
-                len = len + buf[len+2];
-
+                len = 2+len + buf[len+2];
             }
             curr_end = len;
 
@@ -1528,7 +1529,6 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
             regions[region_count-1].end_byte = curr_end;
             regions[region_count-1].state_sequence = NULL;
             regions[region_count-1].state_count = 0;
-
 
         } else {
             break;
@@ -1556,12 +1556,9 @@ region_t *extract_requests_ot(unsigned char *buf, unsigned int buf_size, unsigne
     return regions;
 }
 
-int ot_helper(unsigned char *buf, unsigned int buf_size, int len){
-
-}
 
 unsigned int *extract_response_codes_ot(unsigned char *buf, unsigned int buf_size, unsigned int *state_count_ref) {
-    char encryptByte[1] = {0x00};
+    char encryptByte[2] = {0x00, 0x15};
     char notEncryptByte[1] = {0xFF};
     char *mem;
     unsigned int byte_count = 0;
@@ -1577,16 +1574,15 @@ unsigned int *extract_response_codes_ot(unsigned char *buf, unsigned int buf_siz
     if (state_sequence == NULL) PFATAL("Unable realloc a memory region to store state sequence");
     state_sequence[state_count - 1] = 0;
 
-    OKF("%s",mem);
     while(buf_size < byte_count){
         memcpy(&mem[mem_count], buf + byte_count++, 1);
 
-        if ((mem_count == 0) && memcmp(mem, encryptByte, 1) == 0) {
+        if ( memcmp(mem, encryptByte, 1) == 0) {
             unsigned char message_code = &mem[mem_count+11];
             state_count++;
             state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
             state_sequence[state_count - 1] = message_code;
-        } else if ((mem_count == 0) && memcmp(&buf[0], notEncryptByte, 1) == 0) {
+        } else if (memcmp(&buf[0], notEncryptByte, 1) == 0) {
             unsigned char message_code = &mem[mem_count+1];
             state_count++;
             state_sequence = (unsigned int *) ck_realloc(state_sequence, state_count * sizeof(unsigned int));
